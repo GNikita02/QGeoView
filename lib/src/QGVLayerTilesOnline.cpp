@@ -19,6 +19,21 @@
 #include "QGVLayerTilesOnline.h"
 #include "QGVImage.h"
 
+QGVLayerTilesOnline::QGVLayerTilesOnline()
+    :QGVLayerTiles()
+{
+}
+
+void QGVLayerTilesOnline::SetDatabase(QSharedPointer<QGVDataBase> database) {
+    connect(database.get(), &QGVDataBase::OnLoadTile, this, &QGVLayerTilesOnline::onCacheLoadFinished);
+    this->database = database;
+}
+
+void QGVLayerTilesOnline::SetTileBuilder(QGVTileBuilder *builder)
+{
+    this->tileBuilder = builder;
+}
+
 QGVLayerTilesOnline::~QGVLayerTilesOnline()
 {
     qDeleteAll(mRequest);
@@ -40,6 +55,16 @@ void QGVLayerTilesOnline::onClean()
 void QGVLayerTilesOnline::request(const QGV::GeoTilePos& tilePos)
 {
     const QUrl url(tilePosToUrl(tilePos));
+    if (database != nullptr){
+        database->RequestLoadTile(url.toString(), tilePos);
+    } else {
+        requestFromOnline(tilePos);
+    }
+}
+
+void QGVLayerTilesOnline::requestFromOnline(const QGV::GeoTilePos &tilePos)
+{
+    const QUrl url(tilePosToUrl(tilePos));
     QNetworkRequest request(url);
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
@@ -56,6 +81,25 @@ void QGVLayerTilesOnline::request(const QGV::GeoTilePos& tilePos)
     reply->setProperty("TILE_POS", QVariant::fromValue(tilePos));
     mRequest[tilePos] = reply;
     qgvDebug() << "request" << url;
+}
+
+void QGVLayerTilesOnline::onCacheLoadFinished(QString const & url, const QGV::GeoTilePos& tilePos, QByteArray rawImage)
+{
+    if (rawImage.size() > 0) {
+        qDebug() << "cache-hit" << url << rawImage.size();
+        auto tile = new QGVImage();
+        tile->setGeometry(tilePos.toGeoRect());
+        tile->loadImage(rawImage);
+        tile->setProperty("drawDebug",
+                          QString("%1\ntile(%2,%3,%4)")
+                                  .arg(url)
+                                  .arg(tilePos.zoom())
+                                  .arg(tilePos.pos().x())
+                                  .arg(tilePos.pos().y()));
+        onTile(tilePos, tile);
+    } else {
+        requestFromOnline(tilePos);
+    }
 }
 
 void QGVLayerTilesOnline::cancel(const QGV::GeoTilePos& tilePos)
@@ -80,9 +124,16 @@ void QGVLayerTilesOnline::onReplyFinished(QNetworkReply* reply)
             qgvCritical() << "ERROR" << reply->errorString();
         }
         removeReply(tilePos);
+        if (tileBuilder) {
+            onTile(tilePos, tileBuilder->build(tilePos));
+        }
         return;
     }
+
     const auto rawImage = reply->readAll();
+    if(database != nullptr){
+        database->RequestSaveTile(reply->url().toString(), rawImage);
+    }
     auto tile = new QGVImage();
     tile->setGeometry(tilePos.toGeoRect());
     tile->loadImage(rawImage);

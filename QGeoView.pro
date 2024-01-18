@@ -2,6 +2,7 @@ CONFIG += ordered
 TEMPLATE = subdirs
 SUBDIRS = \
     lib \
+    samples/background-offline \
     samples/shared \
     samples/basic \
     samples/background \

@@ -19,27 +19,40 @@
 #pragma once
 
 #include "QGVLayerTiles.h"
-
+#include "QGVDataBase.h"
+#include "QGVTileBuilder.h"
 #include <QNetworkReply>
+#include <QSharedPointer>
+#include <QString>
 
 class QGV_LIB_DECL QGVLayerTilesOnline : public QGVLayerTiles
 {
     Q_OBJECT
 
 public:
+    QGVLayerTilesOnline();
     ~QGVLayerTilesOnline();
+   void SetDatabase(QSharedPointer<QGVDataBase> database);
+   void SetTileBuilder(QGVTileBuilder* builder);
 
 protected:
     virtual QString tilePosToUrl(const QGV::GeoTilePos& tilePos) const = 0;
+
+public slots:
+    void onCacheLoadFinished(QString const & url, const QGV::GeoTilePos& tilePos, QByteArray rawImage);
+
 
 private:
     void onProjection(QGVMap* geoMap) override;
     void onClean() override;
     void request(const QGV::GeoTilePos& tilePos) override;
+    void requestFromOnline(const QGV::GeoTilePos& tilePos);
     void cancel(const QGV::GeoTilePos& tilePos) override;
     void onReplyFinished(QNetworkReply* reply);
     void removeReply(const QGV::GeoTilePos& tilePos);
 
 private:
     QMap<QGV::GeoTilePos, QNetworkReply*> mRequest;
+    QSharedPointer<QGVDataBase> database;
+    QGVTileBuilder *tileBuilder;
 };

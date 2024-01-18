@@ -1,4 +1,3 @@
-
 /***************************************************************************
  * QGeoView is a Qt / C ++ widget for visualizing geographic data.
  * Copyright (C) 2018-2023 Andrey Yaroshenko.
@@ -19,26 +18,46 @@
 
 #pragma once
 
-#include <QGeoView/QGVDrawItem.h>
+#include <QHash>
+#include <QLabel>
+#include <QGroupBox>
+#include <QMainWindow>
 
-#include <QBrush>
-#include <QPen>
+#include <QGeoView/QGVMap.h>
 
-class MyTile : public QGVDrawItem
+class QueueHelper {
+public:
+    void update(void* key, size_t size) {
+        total_queue_size += size - queue_sizes[key];
+        queue_sizes[key] = size;
+    }
+
+    int64_t GetQueueSize() const {
+        return total_queue_size;
+    }
+
+private:
+    int64_t total_queue_size {0};
+    QHash<void*, int64_t> queue_sizes;
+};
+
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MyTile(const QGV::GeoTilePos& tilePos, QColor color);
+    MainWindow();
+    ~MainWindow();
+
+    QGroupBox* createOptionsList();
 
 private:
-    void onProjection(QGVMap* geoMap) override;
-    QPainterPath projShape() const override;
-    void projPaint(QPainter* painter) override;
-    void drawText(QPainter* painter);
+    void UpdateProgress();
+
 
 private:
-    QGV::GeoTilePos mTilePos;
-    QRectF mProjRect;
-    QColor mColor;
+    QGVMap* mMap;
+    QLabel* cache_status;
+    QueueHelper load_task_queue_size;
+    QueueHelper save_task_queue_size;
 };

@@ -1,7 +1,7 @@
 TARGET = qgeoview
 TEMPLATE = lib
 
-QT += gui widgets network
+QT += gui widgets network sql
 
 DEFINES += QGV_EXPORT
 
@@ -29,7 +29,9 @@ HEADERS += \
     $$PWD/include/QGeoView/QGVWidgetCompass.h \
     $$PWD/include/QGeoView/QGVWidgetScale.h \
     $$PWD/include/QGeoView/QGVWidgetText.h \
-    $$PWD/include/QGeoView/QGVWidgetZoom.h
+    $$PWD/include/QGeoView/QGVWidgetZoom.h \
+    $$PWD/include/QGeoView/QGVDataBase.h \
+    include/QGeoView/QGVTileBuilder.h
 
 SOURCES += \
     $$PWD/src/QGVCamera.cpp \
@@ -55,7 +57,8 @@ SOURCES += \
     $$PWD/src/QGVWidgetCompass.cpp \
     $$PWD/src/QGVWidgetScale.cpp \
     $$PWD/src/QGVWidgetText.cpp \
-    $$PWD/src/QGVWidgetZoom.cpp
+    $$PWD/src/QGVWidgetZoom.cpp \
+    src/QGVDataBase.cpp
 
 INCLUDEPATH += \
     $$PWD/include/ \

@@ -1,4 +1,3 @@
-
 /***************************************************************************
  * QGeoView is a Qt / C ++ widget for visualizing geographic data.
  * Copyright (C) 2018-2023 Andrey Yaroshenko.
@@ -17,28 +16,22 @@
  * along with this program; if not, see https://www.gnu.org/licenses.
  ****************************************************************************/
 
-#pragma once
+#include <QApplication>
+#include <QCommandLineParser>
 
-#include <QGeoView/QGVDrawItem.h>
+#include "mainwindow.h"
 
-#include <QBrush>
-#include <QPen>
-
-class MyTile : public QGVDrawItem
+int main(int argc, char* argv[])
 {
-    Q_OBJECT
+    QApplication app(argc, argv);
+    app.setApplicationName("QGeoView Samples");
 
-public:
-    explicit MyTile(const QGV::GeoTilePos& tilePos, QColor color);
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.process(app);
 
-private:
-    void onProjection(QGVMap* geoMap) override;
-    QPainterPath projShape() const override;
-    void projPaint(QPainter* painter) override;
-    void drawText(QPainter* painter);
-
-private:
-    QGV::GeoTilePos mTilePos;
-    QRectF mProjRect;
-    QColor mColor;
-};
+    MainWindow window;
+    window.show();
+    return app.exec();
+}
